@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Monitor Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <style>
+        /* 通用样式 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: #f4f7fa;
+        }
+
+        /* #app 容器样式 */
+        #app {
+            max-width: 1200px; /* 最大宽度 */
+            margin: 0 auto;    /* 居中对齐 */
+            padding: 20px;
+        }
+
+        /* 屏幕宽度大于等于 768px 时，#app 容器宽度为 50% */
+        @media (min-width: 768px) {
+            #app {
+                width: 50%;
+            }
+        }
+
+        /* 屏幕宽度小于 768px 时，#app 容器占满全屏 */
+        @media (max-width: 768px) {
+            #app {
+                width: 100%;
+                padding: 10px;
+            }
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        /* 屏幕小于 768px 时调整字体 */
+        @media (max-width: 768px) {
+            h2 {
+                font-size: 18px;
+            }
+        }
+
+        /* 适应 Element Plus 组件的样式 */
+        el-button {
+            width: 100%;
+        }
+
+        /* 使链接不换行 */
+        .stock-link {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h2>基础配置</h2>
+        <el-form label-position="top" label-width="120px">
+            <el-form-item label="监控间隔 (秒)">
+                <el-input v-model="config.frequency" type="number" placeholder="Frequency (seconds)"></el-input>
+            </el-form-item>
+
+            <el-form-item label="选择通知方式">
+                <el-select v-model="config.notice_type" placeholder="选择通知方式">
+                    <el-option label="Telegram" value="telegram"></el-option>
+                    <el-option label="微信 (息知)" value="wechat"></el-option>
+                    <el-option label="自定义" value="custom"></el-option>
+                </el-select>
+            </el-form-item>
+
+
+            <!-- 根据选择的通知方式显示相应的输入框 -->
+            <template v-if="config.notice_type === 'telegram'">
+                <el-form-item label="Telegram Bot Token">
+                    <el-input v-model="config.telegrambot" placeholder="Telegram Bot Token"></el-input>
+                </el-form-item>
+                <el-form-item label="Telegram Chat ID">
+                    <el-input v-model="config.chat_id" placeholder="Telegram Chat ID"></el-input>
+                </el-form-item>
+            </template>
+
+            <template v-if="config.notice_type === 'wechat'">
+                <el-form-item label="息知 KEY">
+                    <el-input v-model="config.wechat_key" placeholder="XIZHI KEY"></el-input>
+                </el-form-item>
+            </template>
+
+            <template v-if="config.notice_type === 'custom'">
+                <el-form-item label="自定义 URL">
+                    <el-input v-model="config.custom_url" placeholder="Custom Notification URL"></el-input>
+                </el-form-item>
+            </template>
+
+            <el-button type="primary" @click="updateConfig">保存配置</el-button>
+        </el-form>
+
+        <h2>监控列表</h2>
+        <el-form label-position="top" label-width="120px">
+            <el-form-item label="商品名称">
+                <el-input v-model="newStock.name" placeholder="Stock Name"></el-input>
+            </el-form-item>
+            <el-form-item label="商品链接">
+                <el-input v-model="newStock.url" placeholder="Stock URL"></el-input>
+            </el-form-item>
+            <el-button type="primary" @click="addStock">增加监控</el-button>
+        </el-form>
+
+        <el-table :data="stocks" style="width: 100%; margin-top: 20px;">
+            <el-table-column prop="name" label="名称"></el-table-column>
+            <el-table-column label="链接">
+                <template #default="scope">
+                    <a :href="scope.row.url" class="stock-link" target="_blank">{{ scope.row.url }}</a>
+                </template>
+            </el-table-column>
+            <el-table-column label="状态">
+                <template #default="scope">
+                    <el-badge :value="scope.row.status ? '有货' : '无货'" :type="scope.row.status ? 'primary' : 'danger'"></el-badge>
+                </template>
+            </el-table-column>
+            <el-table-column label="操作">
+                <template #default="scope">
+                    <el-button type="danger" @click="deleteStock(scope.row.name)">删除</el-button>
+                    <!-- <el-button v-if="pausedStocks.includes(scope.row.name)" @click="resumeStock(scope.row.name)">恢复</el-button>
+                    <el-button v-else @click="pauseStock(scope.row.name)">暂停</el-button> -->
+                </template>
+            </el-table-column>
+        </el-table>
+    </div>
+
+    <script src="https://unpkg.com/vue@3.2.47/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    config: {
+                        frequency: 300,
+                        telegrambot: '',
+                        chat_id: ''
+                    },
+                    stocks: [],
+                    newStock: { name: '', url: '' },
+                    pausedStocks: []
+                };
+            },
+            methods: {
+                fetchConfig() {
+                    axios.get('/api/config').then(response => {
+                        this.config = response.data;
+                    });
+                },
+                updateConfig() {
+                    axios.post('/api/config', this.config).then(response => {
+                        this.fetchConfig();
+                        alert(response.data.message);
+                    });
+                },
+                fetchStocks() {
+                    axios.get('/api/stocks').then(response => {
+                        this.stocks = response.data;
+                    });
+                },
+                addStock() {
+                    axios.post('/api/stocks', this.newStock).then(response => {
+                        this.fetchStocks();
+                        this.newStock = { name: '', url: '' };
+                        alert(response.data.message);
+                    });
+                },
+                deleteStock(stockName) {
+                    axios.delete('/api/stocks', { data: { name: stockName } }).then(response => {
+                        this.fetchStocks();
+                        alert(response.data.message);
+                    });
+                },
+                pauseStock(stockName) {
+                    axios.post('/api/stocks/pause', { name: stockName }).then(response => {
+                        this.pausedStocks.push(stockName);
+                        alert(response.data.message);
+                    });
+                },
+                resumeStock(stockName) {
+                    axios.post('/api/stocks/resume', { name: stockName }).then(response => {
+                        this.pausedStocks = this.pausedStocks.filter(name => name !== stockName);
+                        alert(response.data.message);
+                    });
+                }
+            },
+            mounted() {
+                this.fetchConfig();
+                this.fetchStocks();
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

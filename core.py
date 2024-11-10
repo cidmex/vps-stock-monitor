@@ -14,8 +14,6 @@ class StockMonitor:
         with open(self.config_path, 'r') as f:
             self.config = json.load(f)
         self.frequency = self.config['config'].get('frequency', 300)  # 默认检查频率为300秒
-        self.telegram_token = self.config['config'].get('telegrambot')
-        self.chat_id = self.config['config'].get('chat_id')  # Telegram 频道或群组ID
         print("配置已加载")
 
     # 保存配置文件
@@ -39,37 +37,84 @@ class StockMonitor:
             print(f"Error fetching {url}: {e}")
             return None
 
-    # 推送库存变更通知到 Telegram
-    def send_telegram_message(self, message):
-        url = f"https://api.telegram.org/bot{self.telegram_token}/sendMessage"
-        payload = {
-            "chat_id": self.chat_id,
-            "text": message
-        }
-        try:
-            response = requests.get(url, params=payload)
-            if response.status_code == 200:
-                print("Message sent successfully")
+    # 推送库存变更通知到
+    def send_message(self, message):
+        # 获取通知类型
+        notice_type = self.config['config'].get('notice_type', 'telegram')
+        
+        if notice_type == 'telegram':
+            # 读取 Telegram 配置
+            telegram_token = self.config['config'].get('telegrambot')
+            chat_id = self.config['config'].get('chat_id')
+            url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
+            payload = {
+                "chat_id": chat_id,
+                "text": message
+            }
+            try:
+                response = requests.get(url, params=payload)
+                if response.status_code == 200:
+                    print("Telegram message sent successfully")
+                else:
+                    print(f"Failed to send message via Telegram: {response.status_code}")
+            except Exception as e:
+                print(f"Error sending message via Telegram: {e}")
+        
+        elif notice_type == 'wechat':
+            # 读取微信配置
+            wechat_key = self.config['config'].get('wechat_key')  # 获取微信推送密钥
+            if wechat_key:
+                # 构建微信推送 URL
+                url = f"https://xizhi.qqoq.net/{wechat_key}.send"
+                payload = {
+                    'title': '库存变更通知',
+                    'content': message
+                }
+                try:
+                    response = requests.get(url, params=payload)
+                    if response.status_code == 200:
+                        print(f"Message sent successfully to WeChat: {message}")
+                    else:
+                        print(f"Failed to send message via WeChat: {response.status_code}")
+                except Exception as e:
+                    print(f"Error sending message via WeChat: {e}")
             else:
-                print(f"Failed to send message: {response.status_code}")
-        except Exception as e:
-            print(f"Error sending message: {e}")
+                print("WeChat key not found in configuration.")
+        
+        elif notice_type == 'custom':
+            # 读取自定义 URL 配置
+            custom_url = self.config['config'].get('custom_url')
+            if custom_url:
+                # 替换自定义 URL 中的 message 参数
+                custom_url_with_message = custom_url.replace("{message}", message)
+                try:
+                    response = requests.get(custom_url_with_message)
+                    if response.status_code == 200:
+                        print(f"Custom notification sent successfully: {message}")
+                    else:
+                        print(f"Failed to send custom message: {response.status_code}")
+                except Exception as e:
+                    print(f"Error sending custom message: {e}")
+            else:
+                print("Custom URL not found in configuration.")
+
 
     # 刷新配置文件中的库存状态
     def update_stock_status(self):
         has_change = False
+        # print(self.config['stock'])
         for name, item in self.config['stock'].items():
             url = item['url']
             last_status = item.get('status',False)
 
             # 检查库存状态
-            current_status = self.check_stock(url)
+            current_status = not self.check_stock(url)
 
             # 如果状态发生变化，发送通知
             if current_status is not None and current_status != last_status:
-                status_text = "缺货" if current_status else "有货"
-                message = f"商品 '{name}' 的库存状态已更改：{status_text}\n查看链接: {url}"
-                self.send_telegram_message(message)
+                status_text = "有货" if current_status else "缺货"
+                message = f"{name} 库存变动 {status_text}\n购买 {url}"
+                self.send_message(message)
 
                 # 更新库存状态
                 self.config['stock'][name]['status'] = current_status
