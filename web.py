@@ -62,33 +62,33 @@ def stocks():
         # 返回转化后的数组
         return jsonify(stock_list)
 
-@app.route('/api/stocks/pause', methods=['POST'])
-def pause_stock():
-    stock_name = request.json['name']
-    with open('web.config.json', 'r+') as f:
-        web_config = json.load(f)
-        paused_stocks = web_config.get('paused_stocks', [])
-        if stock_name not in paused_stocks:
-            paused_stocks.append(stock_name)
-            web_config['paused_stocks'] = paused_stocks
-            f.seek(0)
-            json.dump(web_config, f, indent=4)
-            f.truncate()
-    return jsonify({"status": "success", "message": f"Stock '{stock_name}' paused"})
+# @app.route('/api/stocks/pause', methods=['POST'])
+# def pause_stock():
+#     stock_name = request.json['name']
+#     with open('web.config.json', 'r+') as f:
+#         web_config = json.load(f)
+#         paused_stocks = web_config.get('paused_stocks', [])
+#         if stock_name not in paused_stocks:
+#             paused_stocks.append(stock_name)
+#             web_config['paused_stocks'] = paused_stocks
+#             f.seek(0)
+#             json.dump(web_config, f, indent=4)
+#             f.truncate()
+#     return jsonify({"status": "success", "message": f"Stock '{stock_name}' paused"})
 
-@app.route('/api/stocks/resume', methods=['POST'])
-def resume_stock():
-    stock_name = request.json['name']
-    with open('web.config.json', 'r+') as f:
-        web_config = json.load(f)
-        paused_stocks = web_config.get('paused_stocks', [])
-        if stock_name in paused_stocks:
-            paused_stocks.remove(stock_name)
-            web_config['paused_stocks'] = paused_stocks
-            f.seek(0)
-            json.dump(web_config, f, indent=4)
-            f.truncate()
-    return jsonify({"status": "success", "message": f"Stock '{stock_name}' resumed"})
+# @app.route('/api/stocks/resume', methods=['POST'])
+# def resume_stock():
+#     stock_name = request.json['name']
+#     with open('web.config.json', 'r+') as f:
+#         web_config = json.load(f)
+#         paused_stocks = web_config.get('paused_stocks', [])
+#         if stock_name in paused_stocks:
+#             paused_stocks.remove(stock_name)
+#             web_config['paused_stocks'] = paused_stocks
+#             f.seek(0)
+#             json.dump(web_config, f, indent=4)
+#             f.truncate()
+#     return jsonify({"status": "success", "message": f"Stock '{stock_name}' resumed"})
 
 if __name__ == '__main__':
     # monitor.start_monitoring()

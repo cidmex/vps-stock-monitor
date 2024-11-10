@@ -6,15 +6,21 @@ from datetime import datetime
 import os
 
 class StockMonitor:
-    def __init__(self, config_path='config.json'):
+    def __init__(self, config_path='data/config.json'):
         self.config_path = config_path
         self.load_config()
 
     # 加载配置文件
     def load_config(self):
+        # 检查目录是否存在，不存在则创建
+        config_dir = os.path.dirname(self.config_path)
+        if not os.path.exists(config_dir):
+            os.makedirs(config_dir)
+
         # 如果配置文件不存在，生成一个初始配置
         if not os.path.exists(self.config_path):
             self.create_initial_config()
+            
         with open(self.config_path, 'r') as f:
             self.config = json.load(f)
         self.frequency = self.config['config'].get('frequency', 300)  # 默认检查频率为300秒
