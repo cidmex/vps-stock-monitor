@@ -95,4 +95,4 @@ if __name__ == '__main__':
     thread = threading.Thread(target=monitor.start_monitoring)
     thread.daemon = True  # 设置为后台线程，这样主线程退出时它会自动退出
     thread.start()
-    app.run(debug=False)
+    app.run(debug=False,host='0.0.0.0')

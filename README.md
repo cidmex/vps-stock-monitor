@@ -1,94 +1,76 @@
-# Stock Monitor
+# Open Monitor
 
-`Stock Monitor` 是一个简单的 Python 库存监控工具，使用 Telegram API 发送库存变更通知。通过定期检查商品页面，判断商品是否缺货，并在状态变化时发送通知到指定的 Telegram 频道或群组。
+Open Monitor 是一个简单的库存监控工具，支持通过配置监控多个商品，并在库存状态变化时，通过 Telegram、微信或自定义 URL 通知用户。该工具提供了一个基于 Flask 的 Web 界面，用户可以通过浏览器轻松管理配置和监控项。
 
-## 功能概述
+## 功能
 
-- **库存监控**：定期检查商品库存状态，根据网页中特定 HTML 元素是否存在来判断商品是否缺货。
-- **Telegram 通知**：当库存状态变化时，向指定的 Telegram 频道或群组发送消息。
-- **实时更新配置**：支持配置文件的实时加载与保存，通过 `reload()` 方法可以手动重载配置。
-- **自动记录**：每次监控周期结束后，记录当前时间和库存状态。
+- **库存监控**：支持监控多个商品的库存状态，支持判断商品是否有货。
+- **通知方式选择**：可以选择通过 Telegram、微信或自定义 URL 发送库存变更通知。
+- **Web 控制台**：基于 Flask 提供一个简单的 Web 控制台，用于添加、删除、暂停监控项和配置通知。
+- **定时监控**：支持定时检查商品的库存状态，并在状态变化时发送通知。
 
-## 安装
+## 安装和配置
 
-1. 克隆项目到本地或直接下载。
-2. 确保安装以下依赖：
+### 1. 安装依赖
 
-    ```bash
-    pip install requests beautifulsoup4
-    ```
-
-3. 创建并配置 `config.json` 文件。
-
-## 配置文件 (`config.json`)
-
-`config.json` 是项目的配置文件，格式如下：
-
-```json
-{
-    "config": {
-        "frequency": 300,  # 监控频率（秒）
-        "telegrambot": "YOUR_TELEGRAM_BOT_TOKEN",
-        "chat_id": "YOUR_TELEGRAM_CHAT_ID"
-    },
-    "stock": {
-        "商品1": {
-            "url": "https://example.com/item1",
-            "status": false
-        },
-        "商品2": {
-            "url": "https://example.com/item2",
-            "status": true
-        }
-    }
-}
-```
-
-### 配置项说明
-
-- **frequency**：监控周期，单位为秒，默认为 300 秒。
-- **telegrambot**：Telegram 机器人令牌，用于发送通知。
-- **chat_id**：Telegram 频道或群组 ID，用于接收通知。
-- **stock**：商品列表，包含商品名称、商品页面 URL 和库存状态（`true` 表示缺货，`false` 表示有货）。
-
-## 使用说明
-
-### 启动监控
-
-在终端运行以下命令启动库存监控：
+首先，克隆项目并进入项目目录：
 
 ```bash
-python core.py
+git clone https://github.com/vpslog/open-monitor
+cd open-monitor
 ```
 
-### 重新加载配置
+然后安装项目依赖：
 
-可以通过调用 `reload()` 方法来重新加载 `config.json` 的配置。示例如下：
-
-```python
-from core import StockMonitor
-
-monitor = StockMonitor()
-monitor.reload()  # 重新加载配置
+```bash
+pip install -r requirements.txt
 ```
 
-### 输出示例
+### 2. 启动应用
 
-每次监控循环结束后，程序会打印当前时间和商品的库存状态，例如：
+启动 Flask 应用：
 
+```bash
+python web.py
 ```
-2024-11-10 12:00:00 - 商品1: 缺货
-2024-11-10 12:00:00 - 商品2: 有货
-配置已更新
-```
+
+Flask 默认会在 `http://your-ip:5000/` 启动服务，您可以通过浏览器访问 Web 界面。将 `your-ip` 替换为您服务器的实际 IP 地址。
+
+### 3. 使用 Web 界面
+
+- 访问 `http://your-ip:5000/`，您将看到监控管理界面。
+- **添加监控**：输入商品名称和商品 URL，点击 "增加监控" 来添加一个新的监控项。
+- **删除监控**：点击 "删除" 按钮来移除商品监控。
+- **更新配置**：修改配置项后，点击 "保存配置" 更新监控频率和通知设置。
+
+### 4. 配置通知
+
+您可以选择不同的通知方式：
+
+- **Telegram**：提供 Telegram Bot Token 和 Chat ID，通过 Telegram 向指定的聊天发送库存变更通知。
+- **微信**：提供息知 KEY，向指定用户发送通知（参考 [息知](https://xz.qqoq.net/#/index/)）。
+- **自定义 URL**：提供一个自定义的通知 URL，`{message}` 参数将会替换为通知内容。
+
+### 5. 监控过程
+
+一旦监控启动，系统会定期检查商品 URL 中的库存信息。如果检测到库存状态变化，系统将通过所选的通知方式向用户发送通知。
+
+---
 
 ## 项目结构
 
-- `core.py`：库存监控主程序，包含 `StockMonitor` 类的实现。
-- `config.json`：项目的配置文件，存储监控商品列表和 Telegram 配置。
+以下是项目的基本目录结构：
 
-## 注意事项
+```
+open-monitor/
+│
+├── README.md             # 项目说明文档
+├── config.json           # 配置文件，包含监控和通知相关参数
+├── core.py               # 核心逻辑处理，负责库存监控和通知发送
+├── requirements.txt      # 项目依赖列表
+├── templates/            # Flask 模板文件夹，存放前端页面
+├── web.py                # Flask Web 应用，负责提供前端管理界面和 API 接口
+└── __pycache__/          # Python 编译字节码缓存目录
+```
 
-1. **确保 Telegram Bot 已被加入到指定频道或群组**，并有发言权限。
-2. **请正确配置 `config.json`** 文件，特别是 `telegrambot` 和 `chat_id` 参数。
-3. 使用前确保商品页面上的缺货元素（如 `<div class="alert alert-danger error-heading">`）的 HTML 结构未更改。
+
