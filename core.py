@@ -3,6 +3,7 @@ import time
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+import os
 
 class StockMonitor:
     def __init__(self, config_path='config.json'):
@@ -11,11 +12,31 @@ class StockMonitor:
 
     # 加载配置文件
     def load_config(self):
+        # 如果配置文件不存在，生成一个初始配置
+        if not os.path.exists(self.config_path):
+            self.create_initial_config()
         with open(self.config_path, 'r') as f:
             self.config = json.load(f)
         self.frequency = self.config['config'].get('frequency', 300)  # 默认检查频率为300秒
         print("配置已加载")
 
+    # 创建初始的配置文件
+    def create_initial_config(self):
+        default_config = {
+            "config": {
+                "frequency": 300,  # 默认检查频率为300秒
+                "telegrambot": "",
+                "chat_id": "",
+                "notificationType": "telegram"  # 默认通知方式为telegram
+            },
+            "stock": {}
+        }
+
+        # 将默认配置写入文件
+        with open(self.config_path, 'w') as f:
+            json.dump(default_config, f, indent=4)
+        print("配置文件已生成：", self.config_path)
+        
     # 保存配置文件
     def save_config(self):
         with open(self.config_path, 'w') as f:
