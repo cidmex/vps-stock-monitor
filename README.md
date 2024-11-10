@@ -19,7 +19,7 @@ VPS Stock Monitor 是一个简单的库存监控工具，支持通过配置监�
 
 ```bash
 https://github.com/vpslog/vps-stock-monitor/
-cd open-monitor
+cd vps-stock-monitor
 ```
 
 然后安装项目依赖：
