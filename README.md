@@ -1,6 +1,6 @@
-# Open Monitor
+# VPS Stock Monitor
 
-Open Monitor 是一个简单的库存监控工具，支持通过配置监控多个商品，并在库存状态变化时，通过 Telegram、微信或自定义 URL 通知用户。该工具提供了一个基于 Flask 的 Web 界面，用户可以通过浏览器轻松管理配置和监控项。
+VPS Stock Monitor 是一个简单的库存监控工具，支持通过配置监控多个商品，并在库存状态变化时，通过 Telegram、微信或自定义 URL 通知用户。该工具提供了一个基于 Flask 的 Web 界面，用户可以通过浏览器轻松管理配置和监控项。
 
 ![alt text](image.png)
 
@@ -18,8 +18,8 @@ Open Monitor 是一个简单的库存监控工具，支持通过配置监控多�
 首先，克隆项目并进入项目目录：
 
 ```bash
-git clone https://github.com/vpslog/open-monitor
-cd open-monitor
+https://github.com/vpslog/vps-stock-monitor/
+cd vps-stock-monitor
 ```
 
 然后安装项目依赖：
