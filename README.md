@@ -13,6 +13,14 @@ VPS Stock Monitor 是一个简单的库存监控工具，支持通过配置监�
 
 ## 安装和配置
 
+### Docker 安装
+
+```
+docker run -v ./vps-stock-monitor:/app/data -p 5000:5000 vpslog/vps-stock-monitor
+```
+
+访问 5000 端口进行设置即可。
+
 ### 1. 安装依赖
 
 首先，克隆项目并进入项目目录：
