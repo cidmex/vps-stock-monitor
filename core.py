@@ -223,7 +223,7 @@ class StockMonitor:
             last_status = item.get('status',False)
 
             # 检查库存状态
-            current_status = not self.check_stock(url)
+            current_status = self.check_stock(url)
 
             # 如果状态发生变化，发送通知
             if current_status is not None and current_status != last_status:
@@ -235,7 +235,7 @@ class StockMonitor:
                 self.config['stock'][name]['status'] = current_status
                 has_change = True
             # 打印当前时间和摘要
-            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {name}: {'缺货' if current_status else '有货'}")
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {name}: {'有货' if current_status else '缺货'}")
 
         if has_change:
             # 保存更新后的配置

@@ -1,12 +1,13 @@
 services:
   app:
     image: vpslog/vps-stock-monitor  # 替换为你的应用容器
+    volumes:
+      - ./vps-stock-monitor:/app/data 
     environment:
       - PROXY_HOST=http://flaresolverr:8191
 
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
-    container_name: flaresolverr
     environment:
       - LOG_LEVEL=info
     restart: unless-stopped
