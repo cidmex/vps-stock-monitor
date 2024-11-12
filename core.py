@@ -8,7 +8,10 @@ import os
 class StockMonitor:
     def __init__(self, config_path='data/config.json'):
         self.config_path = config_path
+        self.blocked_urls = set()  # 存储已经代理过的URL
+        self.proxy_host = os.getenv("PROXY_HOST", None)  # 从环境变量读取
         self.load_config()
+
 
     # 加载配置文件
     def load_config(self):
@@ -67,27 +70,84 @@ class StockMonitor:
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
         }
 
-        try:
-            response = requests.get(url,headers=headers,)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.content, 'html.parser')
+        def fetch_flaresolverr(url):
+            print(f"Using proxy for {url}")
+            headers = {"Content-Type": "application/json"}
+            data = {
+                "cmd": "request.get",
+                "url": url,
+                "maxTimeout": 60000
+            }
+            response = requests.post(f'{self.proxy_host}/v1', headers=headers, json=data)
+            return response, response.json()['solution']['response']
 
-                # 首先检查是否有指定class的div
-                out_of_stock = soup.find('div', class_=alert_class)
-                if out_of_stock:
+        try:
+
+            if not self.proxy_host:
+                response = requests.get(url, headers=headers)
+                if response.status_code != 200:
+                    print(f"Error fetching {url}: Status code {response.status_code}. Try to set host.")
+                    return None
+                content = response.content
+            else:   
+                # cloudflare-bypass 效果不佳
+                # # 如果设置了代理，进行代理逻辑
+                # if url in self.blocked_urls:
+                #     # 如果URL在blocked_urls中，直接使用代理请求
+                #     print(f"Using proxy for {url}")
+                #     proxy_url = f"{self.proxy_host}/html?url={url}"
+                #     print(proxy_url)
+                #     response = requests.get(proxy_url, headers=headers)
+                # else:
+                #     # 尝试非代理请求
+                #     response = requests.get(url, headers=headers)
+                #     if response.status_code != 200:
+                #         print(f"Failed to fetch {url}: Status code {response.status_code}. Trying proxy...")
+                #         proxy_url = f"{self.proxy_host}/html?url={url}"
+                #         response = requests.get(proxy_url, headers=headers)
+                #         if response.status_code == 200:
+                #             self.blocked_urls.add(url)  # 记录该URL，未来通过代理访问
+                # # 如果最终响应状态不是200，输出错误并返回None
+                # if response.status_code != 200:
+                #     print(f"Error fetching {url} via proxy. Status code {response.status_code}")
+                #     return None
+
+                # 如果设置了代理，进行代理逻辑
+                if url in self.blocked_urls:
+                    print('url in set')
+                    # 如果URL在blocked_urls中，直接使用代理请求
+                    response, content = fetch_flaresolverr(url)
+                else:
+                    # 尝试非代理请求
+                    response = requests.get(url, headers=headers)
+                    if response.status_code != 200:
+                        print(f'Return  {response.status_code}')
+                        response, content = fetch_flaresolverr(url)
+                        if response.status_code == 200:
+                            self.blocked_urls.add(url)  # 记录该URL，未来通过代理访问
+                    content = response.content
+                # 如果最终响应状态不是200，输出错误并返回None
+                if response.status_code != 200:
+                    print(f"Error fetching {url} via proxy. Status code {response.status_code}")
+                    return None
+
+            # soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(content, 'html.parser')
+
+            # 首先检查是否有指定class的div
+            out_of_stock = soup.find('div', class_=alert_class)
+            if out_of_stock:
+                return False  # 缺货
+
+            # 其次，检查页面中是否包含 'out of stock', '缺货' 这类文字
+            out_of_stock_keywords = ['out of stock', '缺货', 'sold out', 'no stock']
+            page_text = soup.get_text().lower()  # 获取网页的所有文本并转为小写
+            for keyword in out_of_stock_keywords:
+                if keyword in page_text:
                     return False  # 缺货
 
-                # 其次，检查页面中是否包含 'out of stock', '缺货' 这类文字
-                out_of_stock_keywords = ['out of stock', '缺货', 'sold out', 'no stock']
-                page_text = soup.get_text().lower()  # 获取网页的所有文本并转为小写
-                for keyword in out_of_stock_keywords:
-                    if keyword in page_text:
-                        return False  # 缺货
-
-                return True  # 有货
-            else:
-                print(f"Failed to fetch {url}: Status code {response.status_code}")
-                return None
+            return True  # 有货
+            
         except Exception as e:
             print(f"Error fetching {url}: {e}")
             return None

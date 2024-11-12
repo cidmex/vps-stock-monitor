@@ -25,6 +25,14 @@ docker run -v ./vps-stock-monitor:/app/data -p 5000:5000 vpslog/vps-stock-monito
 
 访问 5000 端口进行设置即可。
 
+如需配置代理，建议使用 `docker-compose` 安装
+
+```bash
+https://github.com/vpslog/vps-stock-monitor/
+cd vps-stock-monitor
+docker compose up -d
+```
+
 ### 1. 安装依赖
 
 首先，克隆项目并进入项目目录：
@@ -89,4 +97,4 @@ open-monitor/
 
 ## 更新日志
 
-2024.11.12: 修复调节监控频率报错，规避线程冲突
+2024.11.12: 修复调节监控频率报错，规避线程冲突，添加`docker compose`，添加绕过 cloudflare，增强适配性
