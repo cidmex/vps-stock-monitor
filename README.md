@@ -25,11 +25,12 @@ docker run -v ./vps-stock-monitor:/app/data -p 5000:5000 vpslog/vps-stock-monito
 
 访问 5000 端口进行设置即可。
 
-如需配置代理，建议使用 `docker-compose` 安装
+如需配置代理或者启用密码验证，建议使用 `docker-compose` 安装
 
 ```bash
 https://github.com/vpslog/vps-stock-monitor/
 cd vps-stock-monitor
+# nano docker-compose.yml 修改密码
 docker compose up -d
 ```
 

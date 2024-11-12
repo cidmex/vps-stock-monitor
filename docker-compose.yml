@@ -16,8 +16,8 @@ services:
     ports:
       - "8080:8080"  # Nginx 容器的端口
     environment:
-      - NGINX_USER=your_username
-      - NGINX_PASSWORD=your_password
+      - NGINX_USER=your_username #用户名
+      - NGINX_PASSWORD=your_password #密码
     depends_on:
       - app
     command: >
