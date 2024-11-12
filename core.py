@@ -23,17 +23,16 @@ class StockMonitor:
             
         with open(self.config_path, 'r') as f:
             self.config = json.load(f)
-        self.frequency = self.config['config'].get('frequency', 300)  # 默认检查频率为300秒
+        self.frequency = int(self.config['config'].get('frequency', 300))  # 默认检查频率为300秒
         print("配置已加载")
 
     # 创建初始的配置文件
     def create_initial_config(self):
         default_config = {
             "config": {
-                "frequency": 300,  # 默认检查频率为300秒
+                "frequency": 30,  # 默认检查频率为30秒
                 "telegrambot": "",
                 "chat_id": "",
-                "notificationType": "telegram"  # 默认通知方式为telegram
             },
             "stock": {}
         }
@@ -72,8 +71,20 @@ class StockMonitor:
             response = requests.get(url,headers=headers,)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.content, 'html.parser')
+
+                # 首先检查是否有指定class的div
                 out_of_stock = soup.find('div', class_=alert_class)
-                return out_of_stock is not None  # True表示缺货，False表示有货
+                if out_of_stock:
+                    return False  # 缺货
+
+                # 其次，检查页面中是否包含 'out of stock', '缺货' 这类文字
+                out_of_stock_keywords = ['out of stock', '缺货', 'sold out', 'no stock']
+                page_text = soup.get_text().lower()  # 获取网页的所有文本并转为小写
+                for keyword in out_of_stock_keywords:
+                    if keyword in page_text:
+                        return False  # 缺货
+
+                return True  # 有货
             else:
                 print(f"Failed to fetch {url}: Status code {response.status_code}")
                 return None
@@ -174,7 +185,9 @@ class StockMonitor:
     def start_monitoring(self):
         print("开始库存监控...")
         while True:
-            self.update_stock_status()
+            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} 检测库存")
+            try: self.update_stock_status()
+            except Exception as e: print(f'循环中发生错误 {str(e)}')
             time.sleep(self.frequency)
 
     # 外部重载配置方法
