@@ -13,7 +13,7 @@ VPS Stock Monitor 是一个简单的库存监控工具，支持通过配置监�
 
 ## 限制
 
-暂时只支持监控 WHMCS 模板的商家（以及其他一些商家），一次只能添加一个监控项（监控链接打开后需要有 Out Of Stock 或者缺货），不支持绕过 Cloudflare 盾或者人机验证
+暂时只支持监控 WHMCS 模板的商家（以及其他一些商家），一次只能添加一个监控项（监控链接打开后需要有 Out Of Stock 或者缺货）
 
 ## 安装和配置
 
@@ -23,7 +23,7 @@ VPS Stock Monitor 是一个简单的库存监控工具，支持通过配置监�
 docker run -v ./vps-stock-monitor:/app/data -p 5000:5000 vpslog/vps-stock-monitor
 ```
 
-访问 5000 端口进行设置即可。
+访问`5000`端口进行设置即可。
 
 如需配置代理或者启用密码验证，建议使用 `docker-compose` 安装
 
@@ -33,6 +33,8 @@ cd vps-stock-monitor
 # nano docker-compose.yml 修改密码
 docker compose up -d
 ```
+
+访问`8080`即可
 
 ### 1. 安装依赖
 
