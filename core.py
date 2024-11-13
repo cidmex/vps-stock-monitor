@@ -85,7 +85,8 @@ class StockMonitor:
 
             if not self.proxy_host:
                 response = requests.get(url, headers=headers)
-                if response.status_code != 200:
+                print(response.status_code)
+                if response.status_code != 200  or '防火墙正在检查' in response.text:
                     print(f"Error fetching {url}: Status code {response.status_code}. Try to set host.")
                     return None
                 content = response.content
@@ -120,7 +121,7 @@ class StockMonitor:
                 else:
                     # 尝试非代理请求
                     response = requests.get(url, headers=headers)
-                    if response.status_code != 200:
+                    if response.status_code != 200  or '防火墙正在检查' in response.text:
                         print(f'Return  {response.status_code}')
                         response, content = fetch_flaresolverr(url)
                         if response.status_code == 200:
@@ -140,7 +141,7 @@ class StockMonitor:
                 return False  # 缺货
 
             # 其次，检查页面中是否包含 'out of stock', '缺货' 这类文字
-            out_of_stock_keywords = ['out of stock', '缺货', 'sold out', 'no stock']
+            out_of_stock_keywords = ['out of stock', '缺货', 'sold out', 'no stock', '缺貨中']
             page_text = soup.get_text().lower()  # 获取网页的所有文本并转为小写
             for keyword in out_of_stock_keywords:
                 if keyword in page_text:
