@@ -140,6 +140,10 @@ class StockMonitor:
 
             # soup = BeautifulSoup(response.content, 'html.parser')
             soup = BeautifulSoup(content, 'html.parser')
+            if '宝塔防火墙正在检查您的访问' in content:
+                # todo: 绕过宝塔防火墙拦截
+                print('被宝塔防火墙拦截')
+                return None
 
             # 首先检查是否有指定class的div
             out_of_stock = soup.find('div', class_=alert_class)
