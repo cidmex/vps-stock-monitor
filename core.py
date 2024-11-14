@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import os
+import random
 
 class StockMonitor:
     def __init__(self, config_path='data/config.json'):
@@ -86,7 +87,7 @@ class StockMonitor:
             if not self.proxy_host:
                 response = requests.get(url, headers=headers)
                 print(response.status_code)
-                if response.status_code != 200  or '防火墙正在检查' in response.text:
+                if response.status_code == 403:
                     print(f"Error fetching {url}: Status code {response.status_code}. Try to set host.")
                     return None
                 content = response.content
@@ -118,10 +119,15 @@ class StockMonitor:
                     print('url in set')
                     # 如果URL在blocked_urls中，直接使用代理请求
                     response, content = fetch_flaresolverr(url)
+                    # 5% 的概率删除该 URL
+                    if random.random() < 0.05:
+                        print(f"Random chance hit: Deleting {url} from blocked list.")
+                        self.blocked_urls.remove(url)
+                            
                 else:
                     # 尝试非代理请求
                     response = requests.get(url, headers=headers)
-                    if response.status_code != 200  or '防火墙正在检查' in response.text:
+                    if response.status_code == 403:
                         print(f'Return  {response.status_code}')
                         response, content = fetch_flaresolverr(url)
                         if response.status_code == 200:
