@@ -1,8 +1,8 @@
 services:
   app:
-    image: vpslog/vps-stock-monitor  # 替换为你的应用容器
+    build: .
     volumes:
-      - ./vps-stock-monitor:/app/data 
+      - ./data:/app/data
     environment:
       - PROXY_HOST=http://flaresolverr:8191
 
@@ -15,7 +15,7 @@ services:
   nginx:
     image: nginx:latest
     ports:
-      - "8080:8080"  # Nginx 容器的端口
+      - "3080:8080"  # Nginx 容器的端口
     environment:
       - NGINX_USER=your_username #用户名
       - NGINX_PASSWORD=your_password #密码

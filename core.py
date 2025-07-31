@@ -92,28 +92,6 @@ class StockMonitor:
                     return None
                 content = response.content
             else:   
-                # cloudflare-bypass 效果不佳
-                # # 如果设置了代理，进行代理逻辑
-                # if url in self.blocked_urls:
-                #     # 如果URL在blocked_urls中，直接使用代理请求
-                #     print(f"Using proxy for {url}")
-                #     proxy_url = f"{self.proxy_host}/html?url={url}"
-                #     print(proxy_url)
-                #     response = requests.get(proxy_url, headers=headers)
-                # else:
-                #     # 尝试非代理请求
-                #     response = requests.get(url, headers=headers)
-                #     if response.status_code != 200:
-                #         print(f"Failed to fetch {url}: Status code {response.status_code}. Trying proxy...")
-                #         proxy_url = f"{self.proxy_host}/html?url={url}"
-                #         response = requests.get(proxy_url, headers=headers)
-                #         if response.status_code == 200:
-                #             self.blocked_urls.add(url)  # 记录该URL，未来通过代理访问
-                # # 如果最终响应状态不是200，输出错误并返回None
-                # if response.status_code != 200:
-                #     print(f"Error fetching {url} via proxy. Status code {response.status_code}")
-                #     return None
-
                 # 如果设置了代理，进行代理逻辑
                 if url in self.blocked_urls:
                     print('url in set')
@@ -127,12 +105,37 @@ class StockMonitor:
                 else:
                     # 尝试非代理请求
                     response = requests.get(url, headers=headers)
-                    if response.status_code == 403:
-                        print(f'Return  {response.status_code}')
+                    content = response.content
+                    
+                    # 检查是否需要绕过Cloudflare
+                    def is_cloudflare_challenge(content):
+                        # 检查页面内容是否包含Cloudflare验证页面的特征
+                        content_str = content.decode('utf-8', errors='ignore').lower()
+                        cf_indicators = [
+                            'cloudflare',
+                            'checking your browser',
+                            'please wait while we check your browser',
+                            'enable javascript and cookies',
+                            'ray id',
+                            'cf-ray',
+                            'security check',
+                            'attention required',
+                            'cloudflare to restrict access',
+                            'ddos protection by cloudflare',
+                            'challenge-platform',
+                            'cf-browser-verification'
+                        ]
+                        return any(indicator in content_str for indicator in cf_indicators)
+                    
+                    # 如果返回403或检测到Cloudflare验证页面，使用代理
+                    if response.status_code == 403 or is_cloudflare_challenge(content):
+                        if response.status_code == 403:
+                            print(f'Return status code {response.status_code}')
+                        else:
+                            print(f'Detected Cloudflare challenge page for {url}')
                         response, content = fetch_flaresolverr(url)
                         if response.status_code == 200:
                             self.blocked_urls.add(url)  # 记录该URL，未来通过代理访问
-                    content = response.content
                 # 如果最终响应状态不是200，输出错误并返回None
                 if response.status_code != 200:
                     print(f"Error fetching {url} via proxy. Status code {response.status_code}")
@@ -140,7 +143,8 @@ class StockMonitor:
 
             # soup = BeautifulSoup(response.content, 'html.parser')
             soup = BeautifulSoup(content, 'html.parser')
-            if '宝塔防火墙正在检查您的访问' in content:
+            content_str = content.decode('utf-8', errors='ignore') if isinstance(content, bytes) else content
+            if '宝塔防火墙正在检查您的访问' in content_str:
                 # todo: 绕过宝塔防火墙拦截
                 print('被宝塔防火墙拦截')
                 return None
@@ -151,7 +155,7 @@ class StockMonitor:
                 return False  # 缺货
 
             # 其次，检查页面中是否包含 'out of stock', '缺货' 这类文字
-            out_of_stock_keywords = ['out of stock', '缺货', 'sold out', 'no stock', '缺貨中']
+            out_of_stock_keywords = ['out of stock', '缺货', 'sold out', 'no stock', 'ausverkauft', '缺貨中']
             page_text = soup.get_text().lower()  # 获取网页的所有文本并转为小写
             for keyword in out_of_stock_keywords:
                 if keyword in page_text:
