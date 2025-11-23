@@ -141,9 +141,18 @@ class StockMonitor:
                     print(f"Error fetching {url} via proxy. Status code {response.status_code}")
                     return None
 
+            # 再次检查是否包含Cloudflare验证特征（防止代理返回的仍是验证页）
+            if is_cloudflare_challenge(content):
+                print(f"Still detecting Cloudflare challenge for {url} after proxy.")
+                return None
+
             # soup = BeautifulSoup(response.content, 'html.parser')
             soup = BeautifulSoup(content, 'html.parser')
             content_str = content.decode('utf-8', errors='ignore') if isinstance(content, bytes) else content
+            
+            # 获取页面标题用于调试
+            page_title = soup.title.string.strip() if soup.title else "No Title"
+            
             if '宝塔防火墙正在检查您的访问' in content_str:
                 # todo: 绕过宝塔防火墙拦截
                 print('被宝塔防火墙拦截')
@@ -160,6 +169,14 @@ class StockMonitor:
             for keyword in out_of_stock_keywords:
                 if keyword in page_text:
                     return False  # 缺货
+
+            # 最后，防止 Cloudflare "Just a moment..." 页面被误判为有货
+            if "Just a moment" in page_title or "Cloudflare" in page_title or "Attention Required" in page_title:
+                print(f"Detected Cloudflare title '{page_title}' for {url}. Treating as error.")
+                return None
+
+            # 调试：如果有货，打印标题以确认不是误报
+            print(f"Check passed (In Stock). Page Title: {page_title}")
 
             return True  # 有货
             
