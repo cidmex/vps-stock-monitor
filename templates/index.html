@@ -53,8 +53,6 @@
             color: var(--primary-color);
         }
 
-
-
         .main-card {
             background: var(--card-bg);
             border-radius: 16px;
@@ -149,8 +147,6 @@
                 align-items: flex-start;
                 gap: 15px;
             }
-
-
         }
     </style>
 </head>
@@ -162,7 +158,6 @@
             <div class="logo-area">
                 <h1><i class="fas fa-server logo-icon"></i> VPS Stock Monitor</h1>
             </div>
-
         </div>
 
         <!-- Configuration Card -->
@@ -227,6 +222,10 @@
                 </transition>
 
                 <div style="text-align: right; margin-top: 10px;">
+                    <el-button type="warning" @click="sendTestNotification" :loading="testLoading"
+                        style="margin-right: 10px;">
+                        <i class="fas fa-paper-plane" style="margin-right: 5px;"></i> Test Notification
+                    </el-button>
                     <el-button type="primary" @click="updateConfig" :loading="loading">
                         <i class="fas fa-save" style="margin-right: 5px;"></i> Save Configuration
                     </el-button>
@@ -337,6 +336,7 @@
                     stocks: [],
                     newStock: { name: '', url: '' },
                     loading: false,
+                    testLoading: false,
                     editDialogVisible: false,
                     editingStock: {
                         old_name: '',
@@ -365,6 +365,16 @@
                     }).catch(() => {
                         this.loading = false;
                         ElementPlus.ElMessage.error('Failed to update config');
+                    });
+                },
+                sendTestNotification() {
+                    this.testLoading = true;
+                    axios.post('/api/test-notification').then(response => {
+                        this.testLoading = false;
+                        ElementPlus.ElMessage.success(response.data.message);
+                    }).catch(error => {
+                        this.testLoading = false;
+                        ElementPlus.ElMessage.error(error.response?.data?.message || 'Failed to send test notification');
                     });
                 },
                 fetchStocks() {

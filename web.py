@@ -29,6 +29,14 @@ def config():
     else:
         return jsonify(monitor.config['config'])
 
+@app.route('/api/test-notification', methods=['POST'])
+def test_notification():
+    try:
+        monitor.send_message("This is a test notification from VPS Stock Monitor.")
+        return jsonify({"status": "success", "message": "Test notification sent"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/api/stocks', methods=['GET', 'POST', 'DELETE', 'PUT'])
 def stocks():
     if request.method == 'POST':
