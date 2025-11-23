@@ -1,175 +1,320 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Monitor Dashboard</title>
+    <title>VPS Stock Monitor</title>
     <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"> <!-- 引入 FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* 通用样式 */
+        :root {
+            --primary-color: #4f46e5;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #111827;
+            --text-secondary: #6b7280;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            background-color: #f4f7fa;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* #app 容器样式 */
         #app {
-            max-width: 1200px; /* 最大宽度 */
-            margin: 0 auto;    /* 居中对齐 */
-            padding: 20px;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
         }
 
-        /* 屏幕宽度大于等于 768px 时，#app 容器宽度为 50% */
-        @media (min-width: 768px) {
-            #app {
-                width: 50%;
-            }
-        }
-
-        /* 屏幕宽度小于 768px 时，#app 容器占满全屏 */
-        @media (max-width: 768px) {
-            #app {
-                width: 100%;
-                padding: 10px;
-            }
-        }
-
-        h2 {
-            margin-bottom: 20px;
-        }
-
-        /* 屏幕小于 768px 时调整字体 */
-        @media (max-width: 768px) {
-            h2 {
-                font-size: 18px;
-            }
-        }
-
-        /* 适应 Element Plus 组件的样式 */
-        el-button {
-            width: 100%;
-        }
-
-        /* 使链接不换行 */
-        .stock-link {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* 右上角按钮位置 */
-        .header-links {
-            position: absolute;
-            top: 20px;
-            right: 20px;
+        .header {
             display: flex;
-            gap: 15px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
         }
 
-        .header-links a {
-            color: #6c757d; /* 设置图标颜色为灰色 */
-            font-size: 20px; /* 调整字体大小 */
-            transition: color 0.3s ease; /* 平滑过渡效果 */
+        .logo-area h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .header-links a:hover {
-            color: #007bff; /* 鼠标悬停时颜色变为蓝色 */
+        .logo-icon {
+            color: var(--primary-color);
         }
 
-        /* 屏幕小于 768px 时调整字体 */
+
+
+        .main-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+            font-size: 16px;
+        }
+
+        /* Element Plus Overrides */
+        .el-button--primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .el-button--primary:hover {
+            background-color: #4338ca;
+            border-color: #4338ca;
+        }
+
+        .el-input__wrapper {
+            box-shadow: 0 0 0 1px #e5e7eb inset;
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+
+        .el-input__wrapper:hover {
+            box-shadow: 0 0 0 1px #d1d5db inset;
+        }
+
+        .el-input__wrapper.is-focus {
+            box-shadow: 0 0 0 2px var(--primary-color) inset !important;
+        }
+
+        .stock-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .stock-link:hover {
+            text-decoration: underline;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-badge.in-stock {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .status-badge.out-of-stock {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            .header-links a {
-                font-size: 15px; /* 调整字体大小 */
+            #app {
+                margin: 20px auto;
             }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+
         }
     </style>
 </head>
+
 <body>
     <div id="app">
-        <!-- 右上角的 Github 和 Telegram 链接 -->
-        <div class="header-links">
-            <a href="https://github.com/vpslog/vps-stock-monitor" target="_blank">
-                <i class="fab fa-github">&nbsp; Github/文档</i> <!-- GitHub 图标 -->
-            </a>
-            <a href="https://t.me/vpalogchat" target="_blank">
-                <i class="fab fa-telegram-plane">&nbsp; Telegram 交流群</i> <!-- Telegram 图标 -->
-            </a>
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-area">
+                <h1><i class="fas fa-server logo-icon"></i> VPS Stock Monitor</h1>
+            </div>
+
         </div>
-        <h2>基础配置</h2>
-        <el-form label-position="top" label-width="120px">
-            <el-form-item label="监控间隔 (秒)">
-                <el-input v-model="config.frequency" type="number" placeholder="Frequency (seconds)"></el-input>
-            </el-form-item>
 
-            <el-form-item label="选择通知方式">
-                <el-select v-model="config.notice_type" placeholder="选择通知方式">
-                    <el-option label="Telegram" value="telegram"></el-option>
-                    <el-option label="微信 (息知)" value="wechat"></el-option>
-                    <el-option label="自定义" value="custom"></el-option>
-                </el-select>
-            </el-form-item>
+        <!-- Configuration Card -->
+        <div class="main-card">
+            <div class="section-title">
+                <i class="fas fa-cog"></i> Global Configuration
+            </div>
+            <el-form label-position="top">
+                <el-row :gutter="20">
+                    <el-col :span="12" :xs="24">
+                        <el-form-item label="Check Frequency (seconds)">
+                            <el-input v-model="config.frequency" type="number" placeholder="300">
+                                <template #prefix><i class="fas fa-clock"></i></template>
+                            </el-input>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12" :xs="24">
+                        <el-form-item label="Notification Method">
+                            <el-select v-model="config.notice_type" placeholder="Select Method" style="width: 100%">
+                                <el-option label="Telegram" value="telegram"></el-option>
+                                <el-option label="WeChat (Xizhi)" value="wechat"></el-option>
+                                <el-option label="Custom URL" value="custom"></el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
 
+                <!-- Dynamic Config Fields -->
+                <transition name="el-fade-in">
+                    <div v-if="config.notice_type === 'telegram'">
+                        <el-row :gutter="20">
+                            <el-col :span="12" :xs="24">
+                                <el-form-item label="Bot Token">
+                                    <el-input v-model="config.telegrambot"
+                                        placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"></el-input>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12" :xs="24">
+                                <el-form-item label="Chat ID">
+                                    <el-input v-model="config.chat_id" placeholder="-100123456789"></el-input>
+                                </el-form-item>
+                            </el-col>
+                        </el-row>
+                    </div>
+                </transition>
 
-            <!-- 根据选择的通知方式显示相应的输入框 -->
-            <template v-if="config.notice_type === 'telegram'">
-                <el-form-item label="Telegram Bot Token">
-                    <el-input v-model="config.telegrambot" placeholder="Telegram Bot Token"></el-input>
+                <transition name="el-fade-in">
+                    <div v-if="config.notice_type === 'wechat'">
+                        <el-form-item label="Xizhi Key">
+                            <el-input v-model="config.wechat_key" placeholder="Key from xizhi.qqoq.net"></el-input>
+                        </el-form-item>
+                    </div>
+                </transition>
+
+                <transition name="el-fade-in">
+                    <div v-if="config.notice_type === 'custom'">
+                        <el-form-item label="Webhook URL">
+                            <el-input v-model="config.custom_url"
+                                placeholder="https://example.com/notify?msg={message}"></el-input>
+                        </el-form-item>
+                    </div>
+                </transition>
+
+                <div style="text-align: right; margin-top: 10px;">
+                    <el-button type="primary" @click="updateConfig" :loading="loading">
+                        <i class="fas fa-save" style="margin-right: 5px;"></i> Save Configuration
+                    </el-button>
+                </div>
+            </el-form>
+        </div>
+
+        <!-- Add Stock Card -->
+        <div class="main-card">
+            <div class="section-title">
+                <i class="fas fa-plus-circle"></i> Add New Monitor
+            </div>
+            <el-form :inline="true" class="demo-form-inline">
+                <el-form-item style="flex: 1; margin-right: 10px;">
+                    <el-input v-model="newStock.name" placeholder="Product Name (e.g. HK VPS)">
+                        <template #prefix><i class="fas fa-tag"></i></template>
+                    </el-input>
                 </el-form-item>
-                <el-form-item label="Telegram Chat ID">
-                    <el-input v-model="config.chat_id" placeholder="Telegram Chat ID"></el-input>
+                <el-form-item style="flex: 2; margin-right: 10px;">
+                    <el-input v-model="newStock.url" placeholder="Product URL">
+                        <template #prefix><i class="fas fa-link"></i></template>
+                    </el-input>
                 </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="addStock" :loading="loading">Add Monitor</el-button>
+                </el-form-item>
+            </el-form>
+        </div>
+
+        <!-- Stock List Card -->
+        <div class="main-card">
+            <div class="section-title">
+                <i class="fas fa-list"></i> Monitored Items
+            </div>
+            <el-table :data="stocks" style="width: 100%" empty-text="No items monitored yet">
+                <el-table-column prop="name" label="Name" width="180">
+                    <template #default="scope">
+                        <strong>{{ scope.row.name }}</strong>
+                    </template>
+                </el-table-column>
+                <el-table-column label="URL" min-width="200">
+                    <template #default="scope">
+                        <a :href="scope.row.url" class="stock-link" target="_blank">
+                            <i class="fas fa-external-link-alt" style="font-size: 12px;"></i> {{
+                            truncateUrl(scope.row.url) }}
+                        </a>
+                    </template>
+                </el-table-column>
+                <el-table-column label="Status" width="120" align="center">
+                    <template #default="scope">
+                        <span class="status-badge" :class="scope.row.status ? 'in-stock' : 'out-of-stock'">
+                            <i :class="scope.row.status ? 'fas fa-check-circle' : 'fas fa-times-circle'"
+                                style="margin-right: 4px;"></i>
+                            {{ scope.row.status ? 'In Stock' : 'No Stock' }}
+                        </span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="Actions" width="180" align="right">
+                    <template #default="scope">
+                        <el-button size="small" @click="openEditDialog(scope.row)" class="action-btn">
+                            <i class="fas fa-edit"></i>
+                        </el-button>
+                        <el-button type="danger" size="small" @click="deleteStock(scope.row.name)" class="action-btn">
+                            <i class="fas fa-trash"></i>
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+
+        <!-- Edit Dialog -->
+        <el-dialog v-model="editDialogVisible" title="Edit Monitor" width="500px" destroy-on-close>
+            <el-form label-position="top">
+                <el-form-item label="Name">
+                    <el-input v-model="editingStock.new_name"></el-input>
+                </el-form-item>
+                <el-form-item label="URL">
+                    <el-input v-model="editingStock.new_url"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="editDialogVisible = false">Cancel</el-button>
+                    <el-button type="primary" @click="saveEdit" :loading="loading">Save Changes</el-button>
+                </span>
             </template>
+        </el-dialog>
 
-            <template v-if="config.notice_type === 'wechat'">
-                <el-form-item label="息知 KEY">
-                    <el-input v-model="config.wechat_key" placeholder="XIZHI KEY"></el-input>
-                </el-form-item>
-            </template>
-
-            <template v-if="config.notice_type === 'custom'">
-                <el-form-item label="自定义 URL">
-                    <el-input v-model="config.custom_url" placeholder="Custom Notification URL"></el-input>
-                </el-form-item>
-            </template>
-
-            <el-button type="primary" @click="updateConfig">保存配置</el-button>
-        </el-form>
-
-        <h2>监控列表</h2>
-        <el-form label-position="top" label-width="120px">
-            <el-form-item label="商品名称">
-                <el-input v-model="newStock.name" placeholder="Stock Name"></el-input>
-            </el-form-item>
-            <el-form-item label="商品链接">
-                <el-input v-model="newStock.url" placeholder="Stock URL"></el-input>
-            </el-form-item>
-            <el-button type="primary" @click="addStock">增加监控</el-button>
-        </el-form>
-
-        <el-table :data="stocks" style="width: 100%; margin-top: 20px;">
-            <el-table-column prop="name" label="名称"></el-table-column>
-            <el-table-column label="链接">
-                <template #default="scope">
-                    <a :href="scope.row.url" class="stock-link" target="_blank">{{ scope.row.url }}</a>
-                </template>
-            </el-table-column>
-            <el-table-column label="状态">
-                <template #default="scope">
-                    <el-badge :value="scope.row.status ? '有货' : '无货'" :type="scope.row.status ? 'primary' : 'danger'"></el-badge>
-                </template>
-            </el-table-column>
-            <el-table-column label="操作">
-                <template #default="scope">
-                    <el-button type="danger" @click="deleteStock(scope.row.name)">删除</el-button>
-                    <!-- <el-button v-if="pausedStocks.includes(scope.row.name)" @click="resumeStock(scope.row.name)">恢复</el-button>
-                    <el-button v-else @click="pauseStock(scope.row.name)">暂停</el-button> -->
-                </template>
-            </el-table-column>
-        </el-table>
     </div>
 
     <script src="https://unpkg.com/vue@3.2.47/dist/vue.global.js"></script>
@@ -191,19 +336,35 @@
                     },
                     stocks: [],
                     newStock: { name: '', url: '' },
-                    pausedStocks: []
+                    loading: false,
+                    editDialogVisible: false,
+                    editingStock: {
+                        old_name: '',
+                        new_name: '',
+                        new_url: ''
+                    }
                 };
             },
             methods: {
+                truncateUrl(url) {
+                    if (url.length > 50) {
+                        return url.substring(0, 50) + '...';
+                    }
+                    return url;
+                },
                 fetchConfig() {
                     axios.get('/api/config').then(response => {
                         this.config = response.data;
                     });
                 },
                 updateConfig() {
+                    this.loading = true;
                     axios.post('/api/config', this.config).then(response => {
-                        this.fetchConfig();
-                        alert(response.data.message);
+                        this.loading = false;
+                        ElementPlus.ElMessage.success(response.data.message);
+                    }).catch(() => {
+                        this.loading = false;
+                        ElementPlus.ElMessage.error('Failed to update config');
                     });
                 },
                 fetchStocks() {
@@ -212,28 +373,59 @@
                     });
                 },
                 addStock() {
+                    if (!this.newStock.name || !this.newStock.url) {
+                        ElementPlus.ElMessage.warning('Please fill in both name and URL');
+                        return;
+                    }
+                    this.loading = true;
                     axios.post('/api/stocks', this.newStock).then(response => {
+                        this.loading = false;
                         this.fetchStocks();
                         this.newStock = { name: '', url: '' };
-                        alert(response.data.message);
+                        ElementPlus.ElMessage.success(response.data.message);
+                    }).catch(() => {
+                        this.loading = false;
+                        ElementPlus.ElMessage.error('Failed to add stock');
                     });
                 },
                 deleteStock(stockName) {
-                    axios.delete('/api/stocks', { data: { name: stockName } }).then(response => {
+                    ElementPlus.ElMessageBox.confirm(
+                        `Are you sure you want to delete "${stockName}"?`,
+                        'Warning',
+                        {
+                            confirmButtonText: 'Delete',
+                            cancelButtonText: 'Cancel',
+                            type: 'warning',
+                        }
+                    ).then(() => {
+                        axios.delete('/api/stocks', { data: { name: stockName } }).then(response => {
+                            this.fetchStocks();
+                            ElementPlus.ElMessage.success(response.data.message);
+                        });
+                    });
+                },
+                openEditDialog(row) {
+                    this.editingStock = {
+                        old_name: row.name,
+                        new_name: row.name,
+                        new_url: row.url
+                    };
+                    this.editDialogVisible = true;
+                },
+                saveEdit() {
+                    if (!this.editingStock.new_name || !this.editingStock.new_url) {
+                        ElementPlus.ElMessage.warning('Name and URL cannot be empty');
+                        return;
+                    }
+                    this.loading = true;
+                    axios.put('/api/stocks', this.editingStock).then(response => {
+                        this.loading = false;
+                        this.editDialogVisible = false;
                         this.fetchStocks();
-                        alert(response.data.message);
-                    });
-                },
-                pauseStock(stockName) {
-                    axios.post('/api/stocks/pause', { name: stockName }).then(response => {
-                        this.pausedStocks.push(stockName);
-                        alert(response.data.message);
-                    });
-                },
-                resumeStock(stockName) {
-                    axios.post('/api/stocks/resume', { name: stockName }).then(response => {
-                        this.pausedStocks = this.pausedStocks.filter(name => name !== stockName);
-                        alert(response.data.message);
+                        ElementPlus.ElMessage.success(response.data.message);
+                    }).catch(error => {
+                        this.loading = false;
+                        ElementPlus.ElMessage.error(error.response?.data?.message || 'Failed to update stock');
                     });
                 }
             },
@@ -244,4 +436,5 @@
         }).use(ElementPlus).mount('#app');
     </script>
 </body>
+
 </html>

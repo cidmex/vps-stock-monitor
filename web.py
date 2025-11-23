@@ -29,7 +29,7 @@ def config():
     else:
         return jsonify(monitor.config['config'])
 
-@app.route('/api/stocks', methods=['GET', 'POST', 'DELETE'])
+@app.route('/api/stocks', methods=['GET', 'POST', 'DELETE', 'PUT'])
 def stocks():
     if request.method == 'POST':
         data = request.json
@@ -38,6 +38,32 @@ def stocks():
         monitor.config['stock'][stock_name] = {"url": url, "status": False}
         monitor.save_config()
         return jsonify({"status": "success", "message": f"Stock '{stock_name}' added"})
+    elif request.method == 'PUT':
+        data = request.json
+        old_name = data.get('old_name')
+        new_name = data.get('new_name')
+        new_url = data.get('new_url')
+
+        if not old_name or not new_name or not new_url:
+             return jsonify({"status": "error", "message": "Missing required fields"}), 400
+
+        if old_name not in monitor.config['stock']:
+            return jsonify({"status": "error", "message": f"Stock '{old_name}' not found"}), 404
+
+        # 保存原有状态
+        current_status = monitor.config['stock'][old_name].get('status', False)
+        
+        # 如果名字变了，删除旧的，创建新的
+        if old_name != new_name:
+            del monitor.config['stock'][old_name]
+        
+        # 更新或创建新的条目
+        monitor.config['stock'][new_name] = {
+            "url": new_url,
+            "status": current_status
+        }
+        monitor.save_config()
+        return jsonify({"status": "success", "message": f"Stock updated successfully"})
     elif request.method == 'DELETE':
         stock_name = request.json['name']
         if stock_name in monitor.config['stock']:
