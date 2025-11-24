@@ -71,6 +71,25 @@ class StockMonitor:
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
         }
 
+        def is_cloudflare_challenge(content):
+            # 检查页面内容是否包含Cloudflare验证页面的特征
+            content_str = content.decode('utf-8', errors='ignore').lower()
+            cf_indicators = [
+                'cloudflare',
+                'checking your browser',
+                'please wait while we check your browser',
+                'enable javascript and cookies',
+                'ray id',
+                'cf-ray',
+                'security check',
+                'attention required',
+                'cloudflare to restrict access',
+                'ddos protection by cloudflare',
+                'challenge-platform',
+                'cf-browser-verification'
+            ]
+            return any(indicator in content_str for indicator in cf_indicators)
+
         def fetch_flaresolverr(url):
             print(f"Using proxy for {url}")
             headers = {"Content-Type": "application/json"}
@@ -83,7 +102,6 @@ class StockMonitor:
             return response, response.json()['solution']['response']
 
         try:
-
             if not self.proxy_host:
                 response = requests.get(url, headers=headers)
                 print(response.status_code)
@@ -108,24 +126,6 @@ class StockMonitor:
                     content = response.content
                     
                     # 检查是否需要绕过Cloudflare
-                    def is_cloudflare_challenge(content):
-                        # 检查页面内容是否包含Cloudflare验证页面的特征
-                        content_str = content.decode('utf-8', errors='ignore').lower()
-                        cf_indicators = [
-                            'cloudflare',
-                            'checking your browser',
-                            'please wait while we check your browser',
-                            'enable javascript and cookies',
-                            'ray id',
-                            'cf-ray',
-                            'security check',
-                            'attention required',
-                            'cloudflare to restrict access',
-                            'ddos protection by cloudflare',
-                            'challenge-platform',
-                            'cf-browser-verification'
-                        ]
-                        return any(indicator in content_str for indicator in cf_indicators)
                     
                     # 如果返回403或检测到Cloudflare验证页面，使用代理
                     if response.status_code == 403 or is_cloudflare_challenge(content):
