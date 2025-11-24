@@ -167,14 +167,25 @@
             </div>
             <el-form label-position="top">
                 <el-row :gutter="20">
-                    <el-col :span="12" :xs="24">
+                    <el-col :span="8" :xs="24">
                         <el-form-item label="Check Frequency (seconds)">
                             <el-input v-model="config.frequency" type="number" placeholder="300">
                                 <template #prefix><i class="fas fa-clock"></i></template>
                             </el-input>
                         </el-form-item>
                     </el-col>
-                    <el-col :span="12" :xs="24">
+                    <el-col :span="8" :xs="24">
+                        <el-form-item label="Concurrency Level">
+                            <el-select v-model="config.concurrency" placeholder="Select Level" style="width: 100%">
+                                <el-option label="1 (Sequential)" :value="1"></el-option>
+                                <el-option label="2" :value="2"></el-option>
+                                <el-option label="4" :value="4"></el-option>
+                                <el-option label="8" :value="8"></el-option>
+                                <el-option label="16" :value="16"></el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="8" :xs="24">
                         <el-form-item label="Notification Method">
                             <el-select v-model="config.notice_type" placeholder="Select Method" style="width: 100%">
                                 <el-option label="Telegram" value="telegram"></el-option>
@@ -327,6 +338,7 @@
                 return {
                     config: {
                         frequency: 300,
+                        concurrency: 1,
                         telegrambot: '',
                         chat_id: '',
                         notice_type: 'telegram',

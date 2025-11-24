@@ -28,6 +28,7 @@ class StockMonitor:
         with open(self.config_path, 'r') as f:
             self.config = json.load(f)
         self.frequency = int(self.config['config'].get('frequency', 300))  # 默认检查频率为300秒
+        self.concurrency = int(self.config['config'].get('concurrency', 1))  # 默认并发数为1
         print("配置已加载")
 
     # 创建初始的配置文件
@@ -35,6 +36,7 @@ class StockMonitor:
         default_config = {
             "config": {
                 "frequency": 30,  # 默认检查频率为30秒
+                "concurrency": 1,  # 默认并发数为1
                 "telegrambot": "",
                 "chat_id": "",
             },
@@ -246,27 +248,70 @@ class StockMonitor:
 
     # 刷新配置文件中的库存状态
     def update_stock_status(self):
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        import threading
+        
         has_change = False
-        # print(self.config['stock'])
-        for name, item in self.config['stock'].items():
+        config_lock = threading.Lock()  # 用于保护配置文件的线程安全
+        
+        def check_single_stock(name, item):
+            """检查单个商品的库存状态"""
             url = item['url']
-            last_status = item.get('status',False)
-
-            # 检查库存状态
+            last_status = item.get('status', False)
             current_status = self.check_stock(url)
-
-            # 如果状态发生变化，发送通知
-            if current_status is not None and current_status != last_status:
-                status_text = "有货" if current_status else "缺货"
-                message = f"{name} 库存变动 {status_text}\n购买 {url}"
-                self.send_message(message)
-
-                # 更新库存状态
-                self.config['stock'][name]['status'] = current_status
-                has_change = True
-            # 打印当前时间和摘要
-            print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {name}: {'有货' if current_status else '缺货'}")
-
+            return name, url, current_status, last_status
+        
+        # 如果并发数为1，使用顺序模式
+        if self.concurrency == 1:
+            for name, item in self.config['stock'].items():
+                url = item['url']
+                last_status = item.get('status', False)
+                current_status = self.check_stock(url)
+                
+                # 如果状态发生变化，发送通知
+                if current_status is not None and current_status != last_status:
+                    status_text = "有货" if current_status else "缺货"
+                    message = f"{name} 库存变动 {status_text}\n购买 {url}"
+                    self.send_message(message)
+                    
+                    # 更新库存状态
+                    self.config['stock'][name]['status'] = current_status
+                    has_change = True
+                
+                # 打印当前时间和摘要
+                print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {name}: {'有货' if current_status else '缺货'}")
+        else:
+            # 使用线程池并发检查
+            with ThreadPoolExecutor(max_workers=self.concurrency) as executor:
+                # 提交所有任务
+                future_to_stock = {
+                    executor.submit(check_single_stock, name, item): name
+                    for name, item in self.config['stock'].items()
+                }
+                
+                # 收集结果
+                for future in as_completed(future_to_stock):
+                    try:
+                        name, url, current_status, last_status = future.result()
+                        
+                        # 如果状态发生变化，发送通知
+                        if current_status is not None and current_status != last_status:
+                            status_text = "有货" if current_status else "缺货"
+                            message = f"{name} 库存变动 {status_text}\n购买 {url}"
+                            self.send_message(message)
+                            
+                            # 更新库存状态（线程安全）
+                            with config_lock:
+                                self.config['stock'][name]['status'] = current_status
+                                has_change = True
+                        
+                        # 打印当前时间和摘要
+                        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {name}: {'有货' if current_status else '缺货'}")
+                        
+                    except Exception as e:
+                        stock_name = future_to_stock[future]
+                        print(f"Error checking {stock_name}: {e}")
+        
         if has_change:
             # 保存更新后的配置
             self.save_config()
