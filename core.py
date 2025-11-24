@@ -73,7 +73,10 @@ class StockMonitor:
 
         def is_cloudflare_challenge(content):
             # 检查页面内容是否包含Cloudflare验证页面的特征
-            content_str = content.decode('utf-8', errors='ignore').lower()
+            if isinstance(content, bytes):
+                content_str = content.decode('utf-8', errors='ignore').lower()
+            else:
+                content_str = content.lower()
             cf_indicators = [
                 'cloudflare',
                 'checking your browser',
@@ -140,11 +143,6 @@ class StockMonitor:
                 if response.status_code != 200:
                     print(f"Error fetching {url} via proxy. Status code {response.status_code}")
                     return None
-
-            # 再次检查是否包含Cloudflare验证特征（防止代理返回的仍是验证页）
-            if is_cloudflare_challenge(content):
-                print(f"Still detecting Cloudflare challenge for {url} after proxy.")
-                return None
 
             # soup = BeautifulSoup(response.content, 'html.parser')
             soup = BeautifulSoup(content, 'html.parser')
